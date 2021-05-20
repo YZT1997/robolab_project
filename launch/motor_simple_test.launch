@@ -1,0 +1,10 @@
+<launch>
+    <node pkg="control485" type="control485_simple_test" name="control485_simple_test" output="screen">
+    </node>
+    <param name="motor_id" type="int" value="3"/>
+    <param name="target_speed" type="int" value="1000"/>
+    <node pkg="read_CAN" type="read_CAN_node" name="read_CAN_node" output="screen">
+    </node>
+    <node pkg="rosbag" type="record" name="bag_record" args="-a -o /home/yangzt/catkin_ws/m5_mainfan.bag">
+    </node>
+</launch>

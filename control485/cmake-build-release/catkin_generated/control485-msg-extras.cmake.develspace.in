@@ -1,0 +1,2 @@
+set(control485_MESSAGE_FILES "/home/yangzt/catkin_ws/devel/share/control485/msg/DriveMotorAction.msg;/home/yangzt/catkin_ws/devel/share/control485/msg/DriveMotorActionGoal.msg;/home/yangzt/catkin_ws/devel/share/control485/msg/DriveMotorActionResult.msg;/home/yangzt/catkin_ws/devel/share/control485/msg/DriveMotorActionFeedback.msg;/home/yangzt/catkin_ws/devel/share/control485/msg/DriveMotorGoal.msg;/home/yangzt/catkin_ws/devel/share/control485/msg/DriveMotorResult.msg;/home/yangzt/catkin_ws/devel/share/control485/msg/DriveMotorFeedback.msg")
+set(control485_SERVICE_FILES "")

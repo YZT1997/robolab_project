@@ -1,0 +1,8 @@
+prefix=/usr/local
+
+Name: obstacle_detect
+Description: Description of obstacle_detect
+Version: 0.0.0
+Cflags: -I${prefix}/include
+Libs: -L${prefix}/lib -lobstacle_detect
+Requires: cv_bridge image_transport roscpp rospy sensor_msgs std_msgs darknet_ros_msgs ti_mmwave_rospkg

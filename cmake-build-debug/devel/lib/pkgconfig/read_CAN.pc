@@ -1,0 +1,8 @@
+prefix=/home/yangzt/catkin_ws/src/cmake-build-debug/devel
+
+Name: read_CAN
+Description: Description of read_CAN
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 

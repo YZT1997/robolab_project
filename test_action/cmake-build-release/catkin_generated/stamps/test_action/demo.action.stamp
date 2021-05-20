@@ -1,0 +1,8 @@
+# Define the goal
+uint32 numGoal
+---
+# Definer the result
+bool finish
+---
+# Define a feedback
+float32 complete_percent

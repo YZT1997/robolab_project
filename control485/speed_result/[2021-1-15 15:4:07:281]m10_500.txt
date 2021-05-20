@@ -1,0 +1,4 @@
+Time: [2021-1-15 15:4:08:345] MotorRev currentRaw currentRms currentCM7290 64536 174 668.463 0.5
+Time: [2021-1-15 15:4:08:968] MotorRev currentRaw currentRms currentCM7290 64536 55536 665.868 555.36
+Time: [2021-1-15 15:4:09:610] MotorRev currentRaw currentRms currentCM7290 64536 55536 665.868 555.36
+Time: [2021-1-15 15:4:10:252] MotorRev currentRaw currentRms currentCM7290 64536 55536 665.868 555.36

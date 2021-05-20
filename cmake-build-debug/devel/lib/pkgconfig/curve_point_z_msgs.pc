@@ -1,0 +1,8 @@
+prefix=/home/yangzt/catkin_ws/src/cmake-build-debug/devel
+
+Name: curve_point_z_msgs
+Description: Description of curve_point_z_msgs
+Version: 1.0.0
+Cflags: -I/home/yangzt/catkin_ws/src/cmake-build-debug/devel/include
+Libs: -L${prefix}/lib 
+Requires: message_runtime message_generation std_msgs

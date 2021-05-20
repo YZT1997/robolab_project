@@ -1,0 +1,8 @@
+prefix=/home/yangzt/yangzt_ws/src/mmw_capture/build/devel
+
+Name: mmw_capture
+Description: Description of mmw_capture
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 

@@ -1,0 +1,6 @@
+<launch>
+    <node pkg="realsense2_driver" type="realsense2_driver" name="realsense2_driver" />
+    <node pkg="border_lingang" type="border_lingang_node" name="border_lingang_node" output="screen"/>
+<!--    <node pkg="controldis" type="controldis_node" name="controldis_node" output="screen"/>-->
+    <node pkg="rosbag" type="record" name="bag_record" args="-a -o /home/yangzt/catkin_ws/dist_40cm_50cm.bag"/>
+</launch>

@@ -1,0 +1,8 @@
+prefix=/home/yangzt/catkin_ws/src/cmake-build-debug/devel
+
+Name: loding_detection
+Description: Description of loding_detection
+Version: 1.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 
