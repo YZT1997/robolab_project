@@ -48,7 +48,7 @@ Eigen::VectorXf boundpoints_clusterd(Mat& rgb,Mat& depth, pcl::PointCloud<pcl::P
                                      vector<Point2i>& pointdepthimg,vector<Point3f>& pointdepthimg_3d);
 void heigth_detection(Mat& rgb,Mat& depth,pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloudin,height_border_msgs::height_border& height_borderMsg,Eigen::VectorXf& coeff_uncut);
 void boud_points_process(Mat& rgb,vector<Point2i>& pointdepthimg,vector<Point3f>& pointdepthimg_3d, height_border_msgs::height_border& height_borderMsg,pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloudin);
-void curve_detect(Mat& rgb, vector<Point2i>& pointdepthimg);
+void curve_detect(Mat& rgb, vector<Point2i>& pointdepthimg, height_border_msgs::height_border& height_borderMsg);
 
 void dis_cal(vector<float>& dis,vector<Point3f>& pointdepthimg_3d,Point3f begin_standard, Point3f end_standard);
 
@@ -67,7 +67,7 @@ int main(int argc,char** argv)
     message_filters::Synchronizer<sync_pol> sync(sync_pol(10), rgb_sub,depth_sub);
     sync.registerCallback(boost::bind(&boud_RGBD,_1,_2));
     pointcloud_pub = nh.advertise<sensor_msgs::PointCloud2>("height_depth", 1000);
-    height_border_param=nh.advertise<height_border_msgs::height_border>("/height_border", 1000);
+    height_border_param=nh.advertise<height_border_msgs::height_border>("/height_border_new", 1000);
     ros::spin();
     return 0;
 }
@@ -92,7 +92,8 @@ void boud_depth(Mat& rgb, Mat& depth)
 
     height_borderMsg.header = height_borderHeader;
     boud_points_process(rgb,pointdepthimg,pointdepthimg_3d,height_borderMsg,cloudin);
-    curve_detect(rgb,pointdepthimg);
+    curve_detect(rgb,pointdepthimg,height_borderMsg);
+    height_border_param.publish(height_borderMsg);
 
     cv_bridge::CvImage cvi;
     ros::Time time = ros::Time::now();
@@ -343,7 +344,7 @@ void boud_points_process(Mat& rgb,vector<Point2i>& pointdepthimg,vector<Point3f>
 //        float Standard_line_fun_0 =0.012201598, Standard_line_fun_1=-0.115838407,Standard_line_fun_2=0.993191319,
 //                Standard_line_fun_3=0.380480909,Standard_line_fun_4=1.230681195,Standard_line_fun_5=6.302467376 ;    //20201221,绿化带
 
-        float Standard_line_fun_0 =0.008204971,	Standard_line_fun_1=0.035536801,Standard_line_fun_2	=-0.999319152,
+        float Standard_line_fun_0 =0.008204971,	Standard_line_fun_1=0.035536801,Standard_line_fun_2	=0.999319152,
                 Standard_line_fun_3=0.36336486,Standard_line_fun_4=2.346083674,Standard_line_fun_5=7.575224397;     //20201211,地面
 
         if(line_para_3d[2]<0)  //调整矢量方向一致,避免余弦角计算1变179问题
@@ -357,7 +358,7 @@ void boud_points_process(Mat& rgb,vector<Point2i>& pointdepthimg,vector<Point3f>
         //计算分界线夹角
         float cosvalue = line_para_3d[0] * Standard_line_fun_0 +  line_para_3d[1] * Standard_line_fun_1 + line_para_3d[2] * Standard_line_fun_2;
         float arc_cosvalue_inangle = acos(cosvalue);
-//        cout<<"cos value "<<cosvalue<<endl;
+
         if(arc_cosvalue_inangle > 2 || arc_cosvalue_inangle < -2) arc_cosvalue_inangle=0;
 
         if(!left) arc_cosvalue_inangle=-arc_cosvalue_inangle; //收割机向右偏,arc_cosvalue_inangle为负值,则调整时向左调整
@@ -427,21 +428,21 @@ void boud_points_process(Mat& rgb,vector<Point2i>& pointdepthimg,vector<Point3f>
 
         Scalar lineColor(0, 255, 0);
         drawArrow(rgb, pStart, pEnd, 10, 45, lineColor);    // Line of border
-        int zs = arc_cosvalue_inangle*180/3.1415926;
-        int xs = abs(int((arc_cosvalue_inangle*180/3.1415926 - zs) * 10));//保留一位小数
-//        if(zs > 90){
-//            zs = -(180 - zs);
+        int int_angle = arc_cosvalue_inangle*180/3.1415926;
+        int dec_angle = abs(int((arc_cosvalue_inangle*180/3.1415926 - int_angle) * 10));//保留一位小数
+//        if(int_angle > 90){
+//            int_angle = -(180 - int_angle);
 //        }
 
         string angle;
-        if(zs >50 || zs < -50)  angle="0";
-        else angle = to_string(zs) + '.' + to_string(xs);
-//        angle = to_string(zs) + '.' + to_string(xs);
+//        if(int_angle >50 || int_angle < -50)  angle="0";
+//        else angle = to_string(int_angle) + '.' + to_string(dec_angle);
+        angle = to_string(int_angle) + '.' + to_string(dec_angle);
 
         height_borderMsg.angle_3d = angle;
 
         height_borderMsg.dis_3d = to_string(distance);
-        height_border_param.publish(height_borderMsg);
+
 
         //仿射变换
         Point2f raw_perceptive[4];
@@ -462,10 +463,10 @@ void boud_points_process(Mat& rgb,vector<Point2i>& pointdepthimg,vector<Point3f>
 //        if(distance<70 && distance>-70)
         if(true)
         {
-            float value_inangle = arc_cosvalue_inangle * 180 / 3.1415926;
-            int xs_value_inangle = (value_inangle - int(value_inangle)) * 10;//保留一位小数
-            string angle =
-                    "Ang: " + std::to_string(int(value_inangle)) + '.' + std::to_string(abs(xs_value_inangle));
+//            float value_inangle = arc_cosvalue_inangle * 180 / 3.1415926;
+//            int xs_value_inangle = (value_inangle - int(value_inangle)) * 10;//保留一位小数
+//            string angle =
+//                    "Ang: " + std::to_string(int(value_inangle)) + '.' + std::to_string(abs(xs_value_inangle));
             cv::putText(rgb, angle, Point2i(400, 50), cv::FONT_HERSHEY_SIMPLEX, 1, CV_RGB(255, 0, 0), 4);
 
             int zs_distance = distance;
@@ -478,7 +479,7 @@ void boud_points_process(Mat& rgb,vector<Point2i>& pointdepthimg,vector<Point3f>
     }
 }
 
-void curve_detect(Mat& rgb,vector<Point2i>& pointdepthimg) {
+void curve_detect(Mat& rgb,vector<Point2i>& pointdepthimg, height_border_msgs::height_border& height_borderMsg) {
     if (pointdepthimg.size() > 20) {
         int path_points_size = pointdepthimg.size();
         vector<Point2i> pointdepthimg_last(pointdepthimg.begin() + path_points_size / 2,
@@ -511,12 +512,16 @@ void curve_detect(Mat& rgb,vector<Point2i>& pointdepthimg) {
         if (angle_last < 0)
             angle_last = 180 + angle_last;
         if (abs(angle_before - angle_last) > 45) {
+            height_borderMsg.is_corner = true;
             Point2i point_curve;
             point_curve.y =
                     (-k_before * point0_last.y + k_before * k_last * point0_last.x + k_last * point0_before.y -
                      k_before * k_last * point0_before.x) / (k_last - k_before);
             point_curve.x = (point_curve.y - point0_before.y + k_before * point0_before.x) / k_before;
             circle(rgb, point_curve, 10, Scalar(255, 0, 0), -1);
+        }
+        else{
+            height_borderMsg.is_corner = false;
         }
     }
 }

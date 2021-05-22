@@ -62,7 +62,9 @@
   <build_depend>curve_point_z_msgs</build_depend> 
   <exec_depend>curve_point_z_msgs</exec_depend>  
   <build_depend>height_msgs</build_depend> 
-  <exec_depend>height_msgs</exec_depend>  
+  <exec_depend>height_msgs</exec_depend>
+  <build_depend>height_border_msgs</build_depend>
+  <exec_depend>height_border_msgs</exec_depend>
 
 
 

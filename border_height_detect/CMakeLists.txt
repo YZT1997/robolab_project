@@ -13,8 +13,9 @@ find_package(catkin REQUIRED COMPONENTS
         border_msgs
         curve_point_z_msgs
         height_msgs
+        height_border_msgs
         )
-catkin_package(CATKIN_DEPENDS border_msgs curve_point_z_msgs height_msgs)
+catkin_package(CATKIN_DEPENDS border_msgs curve_point_z_msgs height_msgs height_border_msgs)
 find_package(PCL REQUIRED)
 find_package(OpenCV REQUIRED)
 include_directories(${PCL_INCLUDE_DIRS})

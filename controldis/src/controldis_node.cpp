@@ -5,12 +5,15 @@
 #include "std_msgs/String.h"
 #include "std_msgs/Int16.h"
 #include "height_border_msgs/height_border.h"
+#include <cmath>
 
 using namespace std;
 
 double alpha = 0;
-double d = 1.5;//孙汉的视觉距离
+double d = 3;//孙汉的视觉距离
 double theta = 0;
+bool need_turn = false;
+int record = 0;
 
 int w2pls(double W)
 {
@@ -38,6 +41,7 @@ private:
 	ros::Publisher pub_speed;
 	ros::Publisher pub_stop;
 
+
 public:
 	sub_pub()
 	{
@@ -46,7 +50,7 @@ public:
 		// sub3 = nh.subscribe("/mainlever_angle", 1000, &sub_pub::Callback, this);
 		// sub4 = nh.subscribe("/natural_angle", 1000, &sub_pub::Callback, this);
 		///////
-		sub_w = nh.subscribe("/height_border",100,&sub_pub::Callback, this);
+		sub_w = nh.subscribe("/height_border_new",100,&sub_pub::Callback, this);
 		pub_turn = nh.advertise<std_msgs::Int16>("/turn",1000);
 		pub_speed = nh.advertise<std_msgs::Int16>("/speed",1000);
 	    pub_stop = nh.advertise<std_msgs::Int16>("/stop",1000);
@@ -60,43 +64,82 @@ void sub_pub::Callback(const height_border_msgs::height_border& height_borderMsg
     double angle = atof(be_angle.c_str());
 	string be_dis=height_borderMsg.dis_3d;
 	double dis = atof(be_dis.c_str());
-	cout<<dis<<endl;
-    // int tu=travel_angle->data;
-    // int ml=travel_angle->data;
-    // int na=natural_angle->data;
+	need_turn = height_borderMsg.is_corner;
+
 	std_msgs::Int16 speed;
 	speed.data = 11000;
 	pub_speed.publish(speed);
     std_msgs::Int16 msg_turn;
-
-
-//    while (ros::ok())
+    // first turn without eyes
+    if (need_turn)
+    {
+        record += 1;
+        if (record == 20)
+        {
+            cout<<"///////////////////////*****************************START GO!!!!!!!!************************************////////////////////////"<<endl;
+            msg_turn.data = 0;
+            pub_turn.publish(msg_turn);
+            usleep(15000000);
+            cout<<"///////////////////////*****************************  TURN  ***********************************////////////////////////"<<endl;
+            msg_turn.data = -7000;
+            pub_turn.publish(msg_turn);
+            usleep(6500000);
+            msg_turn.data = 0;
+            pub_turn.publish(msg_turn);
+            cout<<"///////////////////////*****************************  GO AGAIN  ***********************************////////////////////////"<<endl;
+            usleep(700000);
+            record = 0;
+        }
+    }
+    // second turn complex
+//    if (need_turn)
 //    {
-        // ros::spinOnce();
-        double error = dis*0.001;
-        theta = atan(error/d);
-        alpha = theta + angle;
-        double w = sin(alpha);
-//        cout<<"dis_3d "<<dis<<endl;
-//        cout<<"<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<w:"<<w<<endl;
-//        cout<<"<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<angle"<<(angle/3.1415926)*180<<endl;
-//        cout<<"<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<error"<<error<<endl;
-        
-		int pls = w2pls(1.1*w);
-        if(pls>7000)
-        {
-            pls = 7000;
-        }
-        else if(pls<-7000)
-        {
-            pls = -7000;
-        }
-
-        msg_turn.data = pls;
-//        cout<<"<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<pls:"<<pls<<endl;
-        pub_turn.publish(msg_turn);
+//        record += 1;
+//        if (record == 5)
+//        {
+//            cout<<"///////////////////////*****************************go along************************************////////////////////////"<<endl;
+//            msg_turn.data = 0;
+//            pub_turn.publish(msg_turn);
+//            usleep(5000000);
+//            cout<<"///////////////////////*****************************go back  ***********************************////////////////////////"<<endl;
+//            msg_turn.data = 9000;
+//            pub_turn.publish(msg_turn);
+//            speed.data = -11000;
+//            pub_speed.publish(speed);
+//            usleep(5000000);
+//            cout<<"///////////////////////*****************************  go again  ***********************************////////////////////////"<<endl;
+//            msg_turn.data = 0;
+//            pub_turn.publish(msg_turn);
+//            speed.data = 11000;
+//            pub_speed.publish(speed);
+//            cout<<"///////////////////////*****************************  youzhuan  ***********************************////////////////////////"<<endl;
+//            record = 0;
+//        }
 //    }
-		 //方向盘右转 pls为-
+
+    double error = dis*0.01-0.3;
+    theta = atan(error/d);
+    alpha = theta + (angle/180)*3.1415926;
+//  double w = sin(alpha)/sqrt( (error+0.6)*(error*0.6)+d*d);
+    double w = sin(alpha);
+    cout<<"error: "<<error<<endl;
+    cout<<"<<<<<<<<<<<<theta "<<theta<<endl;
+    cout<<"<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<angle:"<<(angle/180)*3.1415926<<endl;
+    cout<<"<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<alpha"<<alpha<<endl;
+    int pls = -w2pls(0.6*w);
+    cout<<"<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<w"<<w<<endl;
+
+    if(pls>5000)
+        {
+            pls = 5000;
+        }
+        else if(pls<-4000)
+        {
+            pls = -4000;
+        }
+    msg_turn.data = pls;
+    cout<<"<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<pls:"<<pls<<endl;
+    pub_turn.publish(msg_turn);
 }
 double dis_3d;
 void cb(const height_border_msgs::height_border& height_borderMsg){

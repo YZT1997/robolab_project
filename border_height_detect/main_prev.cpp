@@ -24,7 +24,6 @@
 
 #include <pcl/filters/extract_indices.h>
 
-#include "height_border_msgs/height_border.h"
 #include "height_msgs/height.h"
 #include "border_msgs/border.h"
 #include "curve_point_z_msgs/curve_point_z.h"
@@ -33,7 +32,6 @@
 vector<float> coeff_uncut_height_mean(4,0);
 int Estimated_height=0;  //估计的高度平均值
 
-ros::Publisher height_border_pub;       // publish the height and border
 ros::Publisher pointcloud_pub;   //发布点云
 ros::Publisher border_param;     //发布分界线
 ros::Publisher curve_point_pub;  //发布转晚点
@@ -106,14 +104,13 @@ int main(int argc,char** argv)
     image_pub= transport.advertise("/border", 1);
 
     //同步接收rgb,depth
-    message_filters::Subscriber<sensor_msgs::Image> rgb_sub(nh, "/device_0/sensor_1/Color_0/image/data", 1);
-    message_filters::Subscriber<sensor_msgs::Image> depth_sub(nh, "/device_0/sensor_0/Depth_0/image/data", 1);
+    message_filters::Subscriber<sensor_msgs::Image> rgb_sub(nh, "/realsense_sr300/ylx/rgb", 1);
+    message_filters::Subscriber<sensor_msgs::Image> depth_sub(nh, "/realsense_sr300/ylx/depth", 1);
     typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> sync_pol;
     message_filters::Synchronizer<sync_pol> sync(sync_pol(10), rgb_sub,depth_sub);
 
     sync.registerCallback(boost::bind(&border_RGBD,_1,_2));//主函数入口
 
-    height_border_pub = nh.advertise<height_border_msgs::height_border>("height_border", 1000);
     pointcloud_pub = nh.advertise<sensor_msgs::PointCloud2>("/farm_cloud", 1000);
     border_param=nh.advertise<border_msgs::border>("/border_param", 1000);
     curve_point_pub=nh.advertise<curve_point_z_msgs::curve_point_z>("/curve_point_z", 1000);
@@ -182,7 +179,7 @@ void border_RGBD(const sensor_msgs::ImageConstPtr& rgbimg,const sensor_msgs::Ima
         heightMsg.height=0;
         height_detection(rgb,depth,heightMsg);
     }
-    imshow("result",rgb);
+    imshow("reslut",rgb);
     waitKey(1);
 }
 
@@ -272,6 +269,7 @@ void border_rgb(Mat& rgb, vector<Point2i>& inliners_rgb) {
   //  imshow("result", rgb_clone);
   //  waitKey(1);
 }
+
 
 //计算直方图，统计各灰度级像素个数
 int calHist(Mat& gray_2r_g_b)
@@ -575,7 +573,7 @@ void border_depth(Mat& rgb, Mat& depth,vector<Point2i>& inliners_depth_2D,vector
         }
         cloudin->width = cloudin->points.size();
         pcl::toROSMsg(*cloudin + *plane_uncut, cloud_boud);
-//        pointcloud_pub.publish(cloud_boud);
+        pointcloud_pub.publish(cloud_boud);
     }
 
 //    imshow("rgb", rgb);
@@ -586,15 +584,14 @@ void transform_to_pointcloud(Mat& rgb,Mat& depth,pcl::PointCloud<pcl::PointXYZRG
 {
     cloudin->header.frame_id="/frame";
     pcl::PointXYZRGB Point;
-    for(int row=0;row<rgb.rows;row+=2)  //row,col这里做了稀疏化,就不用滤波稀疏了
-        for(int col=0;col<rgb.cols / 2 + 50;col+=2)  //这里只取了深度图像的左边一半的点云,减少计算量,
+    for(int row=0;row<rgb.rows;row+=3)  //row,col这里做了稀疏化,就不用滤波稀疏了
+        for(int col=0;col<rgb.cols/2+50;col+=3)  //这里只取了深度图像的左边一半的点云,减少计算量,
         {
             float z = float(depth.at<ushort>(row,col))/1000;
             float y = (row - 232.171) * z / 615.312;
             float x = (col - 323.844) * z / 615.372;
 
-//            if(y>0 && z<10)  //根据相机坐标系,只选择向下的点云,z方向十米以内的点云;
-            if(y > 0 && z < 10)
+            if(y>0 && z<10)  //根据相机坐标系,只选择向下的点云,z方向十米以内的点云;
             {
                 Point.x=x;
                 Point.y=y;
@@ -605,7 +602,7 @@ void transform_to_pointcloud(Mat& rgb,Mat& depth,pcl::PointCloud<pcl::PointXYZRG
                 cloudin->points.push_back(Point);
             }
         }
-    pointcloud_pub.publish(cloudin);
+    //pointcloud_pub.publish(cloudin);
 }
 
 //考虑检测未收割平面,点云分割
@@ -1172,7 +1169,6 @@ void border_offset(Mat& rgb,vector<Point2i>& pointimg,vector<Point3f>& pointimg_
         string angle = to_string(zs) + '.' + to_string(xs);
         borderMsg.angle = angle;
         borderMsg.dis = to_string(distance);
-
 
         if(arc_cosvalue_inangle<40 && arc_cosvalue_inangle>-40 && distance<70 && distance>-70)
         {

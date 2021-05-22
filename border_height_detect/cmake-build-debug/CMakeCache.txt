@@ -786,6 +786,12 @@ gtest_hide_internal_symbols:BOOL=OFF
 //Dependencies for the target
 gtest_main_LIB_DEPENDS:STATIC=general;-lpthread;general;gtest;
 
+//The directory containing a CMake configuration file for he.
+he_DIR:PATH=he_DIR-NOTFOUND
+
+//The directory containing a CMake configuration file for height_border_msgs.
+height_border_msgs_DIR:PATH=/home/yangzt/catkin_ws/devel/share/height_border_msgs/cmake
+
 //The directory containing a CMake configuration file for height_msgs.
 height_msgs_DIR:PATH=/home/yangzt/catkin_ws/devel/share/height_msgs/cmake
 
