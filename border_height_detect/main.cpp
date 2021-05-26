@@ -68,7 +68,7 @@ void removeOutlier(vector<Point2i> inData, int radius, int k, vector<Point2i> &o
 
 
 //基于深度信息,检测导航路径线点
-void border_depth(Mat& rgb,Mat& depth,vector<Point2i>& inliners_depth_2D,vector<Point3f>& inliners_depth_3D);
+void border_depth(Mat& rgb,Mat& depth,vector<Point2i>& inliners_depth_2D,vector<Point3f>& inliners_depth_3D, height_border_msgs::height_border& heightBorderMsg);
 void transform_to_pointcloud(Mat& rgb,Mat& depth,pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloudin);  //恢复三维结构
 void uncutRegion_search(pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloudin,pcl::PointCloud<pcl::PointXYZRGB>::Ptr& plane_uncut);   //查找未收割区域
 bool ifPlane_uncut_valid(Mat& rgb,pcl::PointCloud<pcl::PointXYZRGB>::Ptr& plane_uncut); //判断未收割区域有效性
@@ -77,7 +77,7 @@ Eigen::VectorXf borderpoints_clusterd(Mat& rgb,Mat& depth, pcl::PointCloud<pcl::
 void removeOutlier_depth_2D_3D(vector<Point2i>& inData_depth_2D, vector<Point2i> &outData_depth_2D, int radius, int k,
                                vector<Point3f>& inData_depth_3D, vector<Point3f>& outData_depth_3D); //二维三维外点去除
 void border_offset(Mat& rgb,vector<Point2i>& pointimg,vector<Point3f>& pointimg_3d,
-                   border_msgs::border& borderMsg,pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloudin);        //三维真实偏移量计算
+                   border_msgs::border& borderMsg,pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloudin, height_border_msgs::height_border& heightBorderMsg);        //三维真实偏移量计算
 void drawArrow(cv::Mat& img, cv::Point pStart, cv::Point pEnd, int len, int alpha,
                cv::Scalar& color, int thickness = 5, int lineType = 8);
 float max_num(vector<float> height);
@@ -90,12 +90,12 @@ void removeOutlier_depth_rgb(vector<Point2i>& inData_rgb, vector<Point2i>& inDat
                              vector<Point3f>& inData_depth_3D, vector<Point3f>& outData_fusion_3D);  //融合后,再去除一次外点
 void kdtree_fusion( vector<Point2i>& outData_fusion_2D,vector<Point2i>& outData_fusion_kdtree);      //kdtree融合
 void final_discrete(Mat& rgb, vector<Point2i>& outData_fusion_kdtree);  //离散化路径点,避免坐标点重叠
-void curve_detect(Mat& rgb, Mat& depth, vector<Point2i>& outData_fusion_kdtree, curve_point_z_msgs::curve_point_z& curve_pointMsg);   //转弯点识别
+void curve_detect(Mat& rgb, Mat& depth, vector<Point2i>& outData_fusion_kdtree, curve_point_z_msgs::curve_point_z& curve_pointMsg, height_border_msgs::height_border& heightBorderMsg);   //转弯点识别
 void Affine_trans(Mat& rgb,vector<Point2i>& outData_fusion_kdtree);  //仿射变换
 
 
 //height_detection
-void height_detection(Mat& rgb,Mat& depth, height_msgs::height& heightMsg);  //作物高度估计主函数入口
+void height_detection(Mat& rgb,Mat& depth, height_msgs::height& heightMsg, height_border_msgs::height_border& heightBorderMsg);  //作物高度估计主函数入口
 
 
 int main(int argc,char** argv)
@@ -106,8 +106,8 @@ int main(int argc,char** argv)
     image_pub= transport.advertise("/border", 1);
 
     //同步接收rgb,depth
-    message_filters::Subscriber<sensor_msgs::Image> rgb_sub(nh, "/device_0/sensor_1/Color_0/image/data", 1);
-    message_filters::Subscriber<sensor_msgs::Image> depth_sub(nh, "/device_0/sensor_0/Depth_0/image/data", 1);
+    message_filters::Subscriber<sensor_msgs::Image> rgb_sub(nh, "/realsense_sr300/ylx/rgb", 1);
+    message_filters::Subscriber<sensor_msgs::Image> depth_sub(nh, "/realsense_sr300/ylx/depth", 1);
     typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> sync_pol;
     message_filters::Synchronizer<sync_pol> sync(sync_pol(10), rgb_sub,depth_sub);
 
@@ -134,6 +134,10 @@ void border_RGBD(const sensor_msgs::ImageConstPtr& rgbimg,const sensor_msgs::Ima
     cv_ptrrgb = cv_bridge::toCvShare(rgbimg);
     rgb = cv_ptrrgb->image;
 
+    // Message for path track
+    std_msgs::Header height_borderHeader;
+    height_border_msgs::height_border heightBorderMsg;
+
     Mat depth(depth_raw.size(),CV_16UC1);
     for(int row=0;row<rgb.rows;row++)
         for(int col=0;col<rgb.cols;col++ ) {
@@ -150,7 +154,7 @@ void border_RGBD(const sensor_msgs::ImageConstPtr& rgbimg,const sensor_msgs::Ima
 
     vector<Point2i> inliners_depth_2D;  //基于深度信息获取的导航路径点,二维
     vector<Point3f> inliners_depth_3D;  //基于深度信息获取的导航路径点,三维
-    border_depth(rgb, depth,inliners_depth_2D,inliners_depth_3D); //基于深度信息获取导航路径点方法,主函数入口
+    border_depth(rgb, depth,inliners_depth_2D,inliners_depth_3D, heightBorderMsg); //基于深度信息获取导航路径点方法,主函数入口
 
     vector<Point2i> outData_fusion_2D;
     vector<Point3f> outData_fusion_3D;
@@ -165,12 +169,15 @@ void border_RGBD(const sensor_msgs::ImageConstPtr& rgbimg,const sensor_msgs::Ima
 
     if(outData_fusion_kdtree.size() < 20) outData_fusion_kdtree=outData_fusion_2D; //去除离散点后剩余点太少则不去除（离散点中也有正确的点,只是较稀疏）
     final_discrete(rgb, outData_fusion_kdtree);    //均匀离散路径点,避免点重合,不利于控制
+    // todo
+
+
 
     std_msgs::Header curve_point_header;
     curve_point_z_msgs::curve_point_z curve_pointMsg;
     curve_pointMsg.header = curve_point_header;
     curve_pointMsg.dis_z=0;
-    curve_detect(rgb,depth,outData_fusion_kdtree,curve_pointMsg);       //转弯点识别
+    curve_detect(rgb,depth,outData_fusion_kdtree,curve_pointMsg, heightBorderMsg);       //转弯点识别
 
     Affine_trans(rgb,outData_fusion_kdtree);
 
@@ -180,8 +187,11 @@ void border_RGBD(const sensor_msgs::ImageConstPtr& rgbimg,const sensor_msgs::Ima
         height_msgs::height heightMsg;
         heightMsg.header = height_header;
         heightMsg.height=0;
-        height_detection(rgb,depth,heightMsg);
+        height_detection(rgb,depth,heightMsg, heightBorderMsg);
     }
+    // For path tracking
+    height_border_pub.publish(heightBorderMsg);
+
     imshow("result",rgb);
     waitKey(1);
 }
@@ -536,7 +546,7 @@ void removeOutlier(vector<Point2i> inData, int radius, int k, vector<Point2i> &o
     }
 }
 
-void border_depth(Mat& rgb, Mat& depth,vector<Point2i>& inliners_depth_2D,vector<Point3f>& inliners_depth_3D)
+void border_depth(Mat& rgb, Mat& depth,vector<Point2i>& inliners_depth_2D,vector<Point3f>& inliners_depth_3D,  height_border_msgs::height_border& heightBorderMsg)
 {
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudin (new pcl::PointCloud<pcl::PointXYZRGB>);
     transform_to_pointcloud(rgb,depth,cloudin);   //恢复三维结构
@@ -556,7 +566,7 @@ void border_depth(Mat& rgb, Mat& depth,vector<Point2i>& inliners_depth_2D,vector
         std_msgs::Header borderHeader;
         border_msgs::border borderMsg;
         borderMsg.header = borderHeader;
-        border_offset(rgb,pointimg,pointimg_3d,borderMsg,cloudin);
+        border_offset(rgb,pointimg,pointimg_3d,borderMsg,cloudin, heightBorderMsg);
 
         cv_bridge::CvImage cvi;
         ros::Time time = ros::Time::now();
@@ -578,7 +588,7 @@ void border_depth(Mat& rgb, Mat& depth,vector<Point2i>& inliners_depth_2D,vector
 //        pointcloud_pub.publish(cloud_boud);
     }
 
-//    imshow("rgb", rgb);
+//    imshow("Border_depth", rgb);
 //    waitKey(1);
 }
 
@@ -918,7 +928,7 @@ void final_discrete(Mat& rgb, vector<Point2i>& outData_fusion_kdtree)
 }
 
 //转弯点识别
-void curve_detect(Mat& rgb,Mat& depth, vector<Point2i>& outData_fusion_kdtree,curve_point_z_msgs::curve_point_z& curve_pointMsg) {
+void curve_detect(Mat& rgb,Mat& depth, vector<Point2i>& outData_fusion_kdtree,curve_point_z_msgs::curve_point_z& curve_pointMsg, height_border_msgs::height_border& heightBorderMsg) {
     if (outData_fusion_kdtree.size() > 20) {
         int path_points_size = outData_fusion_kdtree.size();
         vector<Point2i> outData_fusion_kdtree_before(outData_fusion_kdtree.begin() + path_points_size / 2,
@@ -974,6 +984,9 @@ void curve_detect(Mat& rgb,Mat& depth, vector<Point2i>& outData_fusion_kdtree,cu
             float z_direction=sqrt(curve_disz*curve_disz-9-9); //距离前进方向的距离
             curve_pointMsg.dis_z = z_direction;
             curve_point_pub.publish(curve_pointMsg);
+
+            // Should turn
+            heightBorderMsg.is_corner = true;
         }
     }
 }
@@ -1052,10 +1065,11 @@ void Affine_trans(Mat& rgb,vector<Point2i>& outData_fusion_kdtree) {
 
 
 void border_offset(Mat& rgb,vector<Point2i>& pointimg,vector<Point3f>& pointimg_3d, border_msgs::border& borderMsg,
-                   pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloudin) {
+                   pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloudin,  height_border_msgs::height_border& heightBorderMsg) {
     if (pointimg.size() > 20) {
 
         //标准分界线
+        // This location could be different for Gaoyou Experiment
         float Standard_2Dline_fun_0=0.176318, Standard_2Dline_fun_1=0.984333,Standard_2Dline_fun_2= 379.282,Standard_2Dline_fun_3= 420.846; //正常行走时,标准分界线位置
         Point2i point0_Standard;
         point0_Standard.x = (int) Standard_2Dline_fun_2;
@@ -1071,8 +1085,8 @@ void border_offset(Mat& rgb,vector<Point2i>& pointimg,vector<Point3f>& pointimg_
         vec_bound_standard.x=pEnd_Standard.x-pStart_Standard.x;
         vec_bound_standard.y=pEnd_Standard.y-pStart_Standard.y;
 
-        //Scalar lineColor_Standard(0, 0, 255);
-        //drawArrow(rgb, pStart_Standard, pEnd_Standard, 10, 45, lineColor_Standard);
+        Scalar lineColor_Standard(0, 0, 255);
+        drawArrow(rgb, pStart_Standard, pEnd_Standard, 10, 45, lineColor_Standard);
 
         Vec4f line_para;
         fitLine(pointimg, line_para, cv::DIST_WELSCH, 0, 1e-2, 1e-2);
@@ -1120,8 +1134,8 @@ void border_offset(Mat& rgb,vector<Point2i>& pointimg,vector<Point3f>& pointimg_
             vector<float> dis;
             dis_cal(dis,pointimg_3d,begin_standard,end_standard);
             sort(dis.begin(), dis.end());
-            float dis_reslut = max_num(dis);
-            distance=dis_reslut*100;
+            float dis_result = max_num(dis);
+            distance=dis_result*100;
             if(line_para_3d[3]<end_standard.x) distance=-distance;
         }
         else
@@ -1148,8 +1162,8 @@ void border_offset(Mat& rgb,vector<Point2i>& pointimg,vector<Point3f>& pointimg_
             vector<float> dis;
             dis_cal(dis,rotate_point,begin_standard,end_standard);
             sort(dis.begin(), dis.end());
-            float dis_reslut = max_num(dis);
-            distance=dis_reslut*100;
+            float dis_result = max_num(dis);
+            distance=dis_result*100;
             if(line_para_3d[3]<end_standard.x) distance=-distance;
         }
 
@@ -1166,15 +1180,19 @@ void border_offset(Mat& rgb,vector<Point2i>& pointimg,vector<Point3f>& pointimg_
 
 
         Scalar lineColor(0, 255, 0);
-        //drawArrow(rgb, pStart, pEnd, 10, 45, lineColor);
+        drawArrow(rgb, pStart, pEnd, 10, 45, lineColor);
         int zs = arc_cosvalue_inangle*180/3.1415926;
         int xs = abs(int((arc_cosvalue_inangle*180/3.1415926 - zs) * 10));//保留一位小数
         string angle = to_string(zs) + '.' + to_string(xs);
         borderMsg.angle = angle;
         borderMsg.dis = to_string(distance);
 
+        //
+        heightBorderMsg.angle_3d = angle;
+        heightBorderMsg.dis_3d = to_string(distance);
 
-        if(arc_cosvalue_inangle<40 && arc_cosvalue_inangle>-40 && distance<70 && distance>-70)
+//        if(arc_cosvalue_inangle<40 && arc_cosvalue_inangle>-40 && distance<70 && distance>-70)
+        if(arc_cosvalue_inangle<40 && arc_cosvalue_inangle>-40)
         {
             float value_inangle = arc_cosvalue_inangle * 180 / 3.1415926;
             int xs_value_inangle = (value_inangle - int(value_inangle)) * 10;//保留一位小数
@@ -1187,6 +1205,8 @@ void border_offset(Mat& rgb,vector<Point2i>& pointimg,vector<Point3f>& pointimg_
             cv::putText(rgb, dis, Point2i(400, 100), cv::FONT_HERSHEY_SIMPLEX, 1, CV_RGB(255, 0, 0), 5);
         }
         border_param.publish(borderMsg);
+        cv::imshow("Border_offset", rgb);
+        cv::waitKey(1);
     }
 }
 
@@ -1216,8 +1236,8 @@ float max_num(vector<float> height)
     vector<int> element_num;
     for(int index=0;index<height.size()-1;index++)
     {
-        if(height[index]==height[index+1])
-        {
+//        if(height[index]==height[index+1])  // float val can not be compared directly, because of the accuracy problem of os
+        if(abs(height[index] - height[index+1]) <= 0.0001){
             count++;
             if(index+1==height.size()-1)
                 element_num.push_back(count);
@@ -1301,7 +1321,7 @@ void dis_cal(vector<float>& dis,vector<Point3f>& pointdepthimg_3d,Point3f begin_
     }
 }
 
-void height_detection(Mat& rgb,Mat& depth,height_msgs::height& heightMsg)
+void height_detection(Mat& rgb,Mat& depth,height_msgs::height& heightMsg, height_border_msgs::height_border& heightBorderMsg)
 {
     vector<vector<Point2i> > mask_area;
     vector<Point2i> mask_points;
@@ -1332,9 +1352,10 @@ void height_detection(Mat& rgb,Mat& depth,height_msgs::height& heightMsg)
         }
 
     sort(height.begin(), height.end());
-    int temp_reslut = max_num(height);
-    Estimated_height = Estimated_height==0 ? temp_reslut:0.875*Estimated_height+0.125*temp_reslut;
+    int temp_result = max_num(height);
+    Estimated_height = Estimated_height==0 ? temp_result:0.875*Estimated_height+0.125*temp_result;
 
     heightMsg.height = Estimated_height;
+    heightBorderMsg.height = Estimated_height;
     height_pub.publish(heightMsg);
 }

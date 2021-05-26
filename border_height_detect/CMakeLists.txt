@@ -24,5 +24,5 @@ add_definitions(${PCL_DEFINITIONS})
 find_package(Eigen3 REQUIRED)
 include_directories( ${catkin_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIR} ${OpenCV_INCLUDE_DIRS})
 
-add_executable(border_height_detect main.cpp fit.h)
-target_link_libraries(border_height_detect ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBS})
+add_executable(border_height_detect_node main.cpp fit.h)
+target_link_libraries(border_height_detect_node ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBS})

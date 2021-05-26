@@ -50,7 +50,7 @@ public:
 		// sub3 = nh.subscribe("/mainlever_angle", 1000, &sub_pub::Callback, this);
 		// sub4 = nh.subscribe("/natural_angle", 1000, &sub_pub::Callback, this);
 		///////
-		sub_w = nh.subscribe("/height_border_new",100,&sub_pub::Callback, this);
+		sub_w = nh.subscribe("/height_border",100,&sub_pub::Callback, this);
 		pub_turn = nh.advertise<std_msgs::Int16>("/turn",1000);
 		pub_speed = nh.advertise<std_msgs::Int16>("/speed",1000);
 	    pub_stop = nh.advertise<std_msgs::Int16>("/stop",1000);
@@ -61,9 +61,9 @@ public:
 void sub_pub::Callback(const height_border_msgs::height_border& height_borderMsg)
 {
 	string be_angle=height_borderMsg.angle_3d;
-    double angle = atof(be_angle.c_str());
+    double angle = atof(be_angle.c_str())-3.2;
 	string be_dis=height_borderMsg.dis_3d;
-	double dis = atof(be_dis.c_str());
+	double dis = atof(be_dis.c_str())+95;
 	need_turn = height_borderMsg.is_corner;
 
 	std_msgs::Int16 speed;
@@ -74,6 +74,7 @@ void sub_pub::Callback(const height_border_msgs::height_border& height_borderMsg
     if (need_turn)
     {
         record += 1;
+
         if (record == 20)
         {
             cout<<"///////////////////////*****************************START GO!!!!!!!!************************************////////////////////////"<<endl;
@@ -117,7 +118,7 @@ void sub_pub::Callback(const height_border_msgs::height_border& height_borderMsg
 //        }
 //    }
 
-    double error = dis*0.01-0.3;
+    double error = dis*0.01;
     theta = atan(error/d);
     alpha = theta + (angle/180)*3.1415926;
 //  double w = sin(alpha)/sqrt( (error+0.6)*(error*0.6)+d*d);
