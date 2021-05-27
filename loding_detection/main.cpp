@@ -116,7 +116,8 @@ int main(int argc, char** argv)
 {
     ros::init(argc, argv, "loding_detection");
     ros::NodeHandle nh;
-    subRGB = nh.subscribe<sensor_msgs::Image>("/realsense_sr300/ylx/rgb", 1, &loding_detection_rgb);
+//    subRGB = nh.subscribe<sensor_msgs::Image>("/realsense_sr300/ylx/rgb", 1, &loding_detection_rgb);
+    subRGB = nh.subscribe<sensor_msgs::Image>("/device_0/sensor_1/Color_0/image/data", 1, &loding_detection_rgb);       // for rosbag from Japan
     ros::spin();
 }
 

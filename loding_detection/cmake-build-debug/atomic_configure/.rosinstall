@@ -1,2 +1,2 @@
 - setup-file:
-    local-name: /home/yangzt/catkin_ws/src/loding_detection/cmake-build-debug/devel/setup.sh
+    local-name: /home/yangzt/catkin_ws/devel/setup.sh

@@ -278,6 +278,19 @@ topic_tools_generate_messages_cpp/fast:
 .PHONY : topic_tools_generate_messages_cpp/fast
 
 #=============================================================================
+# Target rules for targets named border_height_detect_node
+
+# Build rule for target.
+border_height_detect_node: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 border_height_detect_node
+.PHONY : border_height_detect_node
+
+# fast build rule for target.
+border_height_detect_node/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/border_height_detect_node.dir/build.make CMakeFiles/border_height_detect_node.dir/build
+.PHONY : border_height_detect_node/fast
+
+#=============================================================================
 # Target rules for targets named topic_tools_generate_messages_eus
 
 # Build rule for target.
@@ -913,19 +926,6 @@ rosgraph_msgs_generate_messages_lisp: cmake_check_build_system
 rosgraph_msgs_generate_messages_lisp/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rosgraph_msgs_generate_messages_lisp.dir/build.make CMakeFiles/rosgraph_msgs_generate_messages_lisp.dir/build
 .PHONY : rosgraph_msgs_generate_messages_lisp/fast
-
-#=============================================================================
-# Target rules for targets named border_height_detect
-
-# Build rule for target.
-border_height_detect: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 border_height_detect
-.PHONY : border_height_detect
-
-# fast build rule for target.
-border_height_detect/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/border_height_detect.dir/build.make CMakeFiles/border_height_detect.dir/build
-.PHONY : border_height_detect/fast
 
 #=============================================================================
 # Target rules for targets named tf_generate_messages_lisp
@@ -1596,7 +1596,7 @@ main.o: main.cpp.o
 
 # target to build an object file
 main.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/border_height_detect.dir/build.make CMakeFiles/border_height_detect.dir/main.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/border_height_detect_node.dir/build.make CMakeFiles/border_height_detect_node.dir/main.cpp.o
 .PHONY : main.cpp.o
 
 main.i: main.cpp.i
@@ -1605,7 +1605,7 @@ main.i: main.cpp.i
 
 # target to preprocess a source file
 main.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/border_height_detect.dir/build.make CMakeFiles/border_height_detect.dir/main.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/border_height_detect_node.dir/build.make CMakeFiles/border_height_detect_node.dir/main.cpp.i
 .PHONY : main.cpp.i
 
 main.s: main.cpp.s
@@ -1614,7 +1614,7 @@ main.s: main.cpp.s
 
 # target to generate assembly for a file
 main.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/border_height_detect.dir/build.make CMakeFiles/border_height_detect.dir/main.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/border_height_detect_node.dir/build.make CMakeFiles/border_height_detect_node.dir/main.cpp.s
 .PHONY : main.cpp.s
 
 # Help Target
@@ -1733,7 +1733,7 @@ help:
 	@echo "... topic_tools_generate_messages_lisp"
 	@echo "... topic_tools_generate_messages_nodejs"
 	@echo "... topic_tools_generate_messages_py"
-	@echo "... border_height_detect"
+	@echo "... border_height_detect_node"
 	@echo "... gmock"
 	@echo "... gmock_main"
 	@echo "... gtest"

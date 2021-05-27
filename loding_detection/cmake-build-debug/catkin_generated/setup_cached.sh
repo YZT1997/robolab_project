@@ -7,6 +7,6 @@
 # new environment variables
 
 # modified environment variables
-export CMAKE_PREFIX_PATH="/home/yangzt/catkin_ws/src/loding_detection/cmake-build-debug/devel:$CMAKE_PREFIX_PATH"
-export ROSLISP_PACKAGE_DIRECTORIES="/home/yangzt/catkin_ws/src/loding_detection/cmake-build-debug/devel/share/common-lisp:$ROSLISP_PACKAGE_DIRECTORIES"
-export ROS_PACKAGE_PATH="/home/yangzt/catkin_ws/src/loding_detection:$ROS_PACKAGE_PATH"
+export LD_LIBRARY_PATH='/home/yangzt/sda_ws/devel/lib:/home/yangzt/catkin_ws/devel/lib:/opt/ros/melodic/lib:/usr/local/cuda-11.2/lib64'
+export PATH='/opt/ros/melodic/bin:/usr/local/cuda-11.2/bin:/home/yangzt/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/home/yangzt/clion-2020.3.1/bin'
+export ROS_PACKAGE_PATH='/home/yangzt/sda_ws/src:/home/yangzt/catkin_ws/src:/home/yangzt/catkin_ws/src/controldis:/home/yangzt/catkin_ws/src/border_height_detect:/home/yangzt/catkin_ws/src/border_height_detect:/home/yangzt/catkin_ws/src/loding_detection:/home/yangzt/catkin_ws/src/loding_detection:/opt/ros/melodic/share'

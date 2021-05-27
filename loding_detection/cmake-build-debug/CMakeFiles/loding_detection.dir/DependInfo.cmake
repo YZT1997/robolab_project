@@ -5,6 +5,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
   "/home/yangzt/catkin_ws/src/loding_detection/glcm.cpp" "/home/yangzt/catkin_ws/src/loding_detection/cmake-build-debug/CMakeFiles/loding_detection.dir/glcm.cpp.o"
+  "/home/yangzt/catkin_ws/src/border_height_detect/simple_test.cpp" "/home/yangzt/catkin_ws/src/loding_detection/cmake-build-debug/CMakeFiles/loding_detection.dir/home/yangzt/catkin_ws/src/border_height_detect/simple_test.cpp.o"
   "/home/yangzt/catkin_ws/src/loding_detection/main.cpp" "/home/yangzt/catkin_ws/src/loding_detection/cmake-build-debug/CMakeFiles/loding_detection.dir/main.cpp.o"
   "/home/yangzt/catkin_ws/src/loding_detection/wavelet.cpp" "/home/yangzt/catkin_ws/src/loding_detection/cmake-build-debug/CMakeFiles/loding_detection.dir/wavelet.cpp.o"
   )

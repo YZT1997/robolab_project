@@ -997,7 +997,8 @@ void Affine_trans(Mat& rgb,vector<Point2i>& outData_fusion_kdtree) {
     raw_perceptive[0]=(Point2i(220,209));
     raw_perceptive[1]=(Point2i(420,209));
     raw_perceptive[2]=(Point2i(596,477));
-    raw_perceptive[3]=(Point2i(-43,477));
+//    raw_perceptive[3]=(Point2i(-43,477));  //  - 43 maybe wrong
+    raw_perceptive[3]=(Point2i(43,477));
 
     Point2f target_perceptive[4];
     target_perceptive[0]=(Point2i(220,209));
@@ -1178,6 +1179,10 @@ void border_offset(Mat& rgb,vector<Point2i>& pointimg,vector<Point3f>& pointimg_
         pEnd.x = (380 - point0.y + k * point0.x) / k;
         pEnd.y = 380;
 
+        // caulate the 2D distance based on two ling
+        int dist_2d = ((pStart.x - pStart_Standard.x) + (pEnd.x - pEnd_Standard.x) + 353 / 2) / 2;
+
+
 
         Scalar lineColor(0, 255, 0);
         drawArrow(rgb, pStart, pEnd, 10, 45, lineColor);
@@ -1203,6 +1208,10 @@ void border_offset(Mat& rgb,vector<Point2i>& pointimg,vector<Point3f>& pointimg_
             int zs_distance = distance;
             string dis = "Dis: " + std::to_string(zs_distance)+"cm";
             cv::putText(rgb, dis, Point2i(400, 100), cv::FONT_HERSHEY_SIMPLEX, 1, CV_RGB(255, 0, 0), 5);
+
+            // 2d dist
+            string dis_2d_str = "Dis 2d: " + to_string(dist_2d);
+            cv::putText(rgb, dis_2d_str, Point2i(400, 150),cv::FONT_HERSHEY_SIMPLEX, 1, CV_RGB(255, 0, 0), 3);
         }
         border_param.publish(borderMsg);
         cv::imshow("Border_offset", rgb);

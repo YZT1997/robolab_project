@@ -23,6 +23,9 @@ BUILD_GTEST:BOOL=OFF
 //Build shared libraries (DLLs).
 BUILD_SHARED_LIBS:BOOL=ON
 
+//No help, variable specified on the command line.
+CATKIN_DEVEL_PREFIX:PATH=/home/yangzt/catkin_ws/devel
+
 //Catkin enable testing
 CATKIN_ENABLE_TESTING:BOOL=ON
 
@@ -255,16 +258,16 @@ EMPY_SCRIPT:STRING=/usr/bin/empy
 GMock_DIR:PATH=GMock_DIR-NOTFOUND
 
 //Path to a file.
-GTEST_INCLUDE_DIR:PATH=/usr/include
+GTEST_INCLUDE_DIR:PATH=/usr/local/include
 
 //Path to a library.
-GTEST_LIBRARY:FILEPATH=GTEST_LIBRARY-NOTFOUND
+GTEST_LIBRARY:FILEPATH=/usr/local/lib/libgtest.so
 
 //Path to a library.
 GTEST_LIBRARY_DEBUG:FILEPATH=GTEST_LIBRARY_DEBUG-NOTFOUND
 
 //Path to a library.
-GTEST_MAIN_LIBRARY:FILEPATH=GTEST_MAIN_LIBRARY-NOTFOUND
+GTEST_MAIN_LIBRARY:FILEPATH=/usr/local/lib/libgtest_main.so
 
 //Path to a library.
 GTEST_MAIN_LIBRARY_DEBUG:FILEPATH=GTEST_MAIN_LIBRARY_DEBUG-NOTFOUND
@@ -276,7 +279,7 @@ LSB_FOUND:BOOL=TRUE
 LSB_RELEASE_EXECUTABLE:FILEPATH=/usr/bin/lsb_release
 
 //Path to a program.
-NOSETESTS:FILEPATH=/usr/bin/nosetests-2.7
+NOSETESTS:FILEPATH=/home/yangzt/.local/bin/nosetests-2.7
 
 //The directory containing a CMake configuration file for OpenCV.
 OpenCV_DIR:PATH=/usr/share/OpenCV
@@ -455,9 +458,9 @@ CMAKE_CACHEFILE_DIR:INTERNAL=/home/yangzt/catkin_ws/src/loding_detection/cmake-b
 //Major version of cmake used to create the current loaded cache
 CMAKE_CACHE_MAJOR_VERSION:INTERNAL=3
 //Minor version of cmake used to create the current loaded cache
-CMAKE_CACHE_MINOR_VERSION:INTERNAL=17
+CMAKE_CACHE_MINOR_VERSION:INTERNAL=19
 //Patch version of cmake used to create the current loaded cache
-CMAKE_CACHE_PATCH_VERSION:INTERNAL=5
+CMAKE_CACHE_PATCH_VERSION:INTERNAL=2
 //ADVANCED property for variable: CMAKE_COLOR_MAKEFILE
 CMAKE_COLOR_MAKEFILE-ADVANCED:INTERNAL=1
 //Path to CMake executable.
@@ -574,7 +577,7 @@ CMAKE_RANLIB-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_READELF
 CMAKE_READELF-ADVANCED:INTERNAL=1
 //Path to CMake installation.
-CMAKE_ROOT:INTERNAL=/home/yangzt/clion-2020.3.1/bin/cmake/linux/share/cmake-3.17
+CMAKE_ROOT:INTERNAL=/home/yangzt/clion-2020.3.1/bin/cmake/linux/share/cmake-3.19
 //ADVANCED property for variable: CMAKE_SHARED_LINKER_FLAGS
 CMAKE_SHARED_LINKER_FLAGS-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_SHARED_LINKER_FLAGS_DEBUG
