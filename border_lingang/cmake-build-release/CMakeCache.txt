@@ -425,6 +425,15 @@ PCL_COMMON_LIBRARY:FILEPATH=/usr/lib/x86_64-linux-gnu/libpcl_common.so
 //path to pcl_common library debug
 PCL_COMMON_LIBRARY_DEBUG:FILEPATH=/usr/lib/x86_64-linux-gnu/libpcl_common.so
 
+//path to COMPONENT headers
+PCL_COMPONENT_INCLUDE_DIR:PATH=PCL_COMPONENT_INCLUDE_DIR-NOTFOUND
+
+//path to pcl_COMPONENT library
+PCL_COMPONENT_LIBRARY:FILEPATH=PCL_COMPONENT_LIBRARY-NOTFOUND
+
+//path to pcl_COMPONENT library debug
+PCL_COMPONENT_LIBRARY_DEBUG:FILEPATH=PCL_COMPONENT_LIBRARY_DEBUG-NOTFOUND
+
 //The directory containing a CMake configuration file for PCL.
 PCL_DIR:PATH=/usr/lib/x86_64-linux-gnu/cmake/pcl
 

@@ -30,6 +30,12 @@
 #include "curve_point_z_msgs/curve_point_z.h"
 #include "fit.h"
 
+/*
+ * Set option for virtual test
+ *
+ * * */
+const bool isTrueHarvest = true;
+
 vector<float> coeff_uncut_height_mean(4,0);
 int Estimated_height=0;  //估计的高度平均值
 
@@ -596,25 +602,54 @@ void transform_to_pointcloud(Mat& rgb,Mat& depth,pcl::PointCloud<pcl::PointXYZRG
 {
     cloudin->header.frame_id="/frame";
     pcl::PointXYZRGB Point;
-    for(int row=0;row<rgb.rows;row+=2)  //row,col这里做了稀疏化,就不用滤波稀疏了
-        for(int col=0;col<rgb.cols / 2 + 50;col+=2)  //这里只取了深度图像的左边一半的点云,减少计算量,
-        {
-            float z = float(depth.at<ushort>(row,col))/1000;
-            float y = (row - 232.171) * z / 615.312;
-            float x = (col - 323.844) * z / 615.372;
+
+    // Choose left half or right half
+    if(isTrueHarvest){
+        for(int row=0;row<rgb.rows;row+=2)  //row,col这里做了稀疏化,就不用滤波稀疏了
+            for(int col=0;col<rgb.cols / 2 + 50;col+=2)  //这里只取了深度图像的左边一半的点云,减少计算量,
+            {
+                float z = float(depth.at<ushort>(row,col))/1000;
+                float y = (row - 232.171) * z / 615.312;
+                float x = (col - 323.844) * z / 615.372;
 
 //            if(y>0 && z<10)  //根据相机坐标系,只选择向下的点云,z方向十米以内的点云;
-            if(y > 0 && z < 10)
+                if(y > 0 && z < 10)
+                {
+                    Point.x=x;
+                    Point.y=y;
+                    Point.z=z;
+                    Point.b=rgb.ptr<uchar>(row)[col*3];
+                    Point.g=rgb.ptr<uchar>(row)[col*3+1];
+                    Point.r=rgb.ptr<uchar>(row)[col*3+2];
+                    cloudin->points.push_back(Point);
+                }
+            }
+    }
+    else{
+        // right half for virtual
+        for(int row=0;row<rgb.rows;row+=2) { //row,col这里做了稀疏化,就不用滤波稀疏了
+            for(int col= rgb.cols / 2 - 50; col<rgb.cols; col+=2)  //这里只取了深度图像的左边一半的点云,减少计算量,
             {
-                Point.x=x;
-                Point.y=y;
-                Point.z=z;
-                Point.b=rgb.ptr<uchar>(row)[col*3];
-                Point.g=rgb.ptr<uchar>(row)[col*3+1];
-                Point.r=rgb.ptr<uchar>(row)[col*3+2];
-                cloudin->points.push_back(Point);
+                float z = float(depth.at<ushort>(row,col))/1000;
+                float y = (row - 232.171) * z / 615.312;
+                float x = (col - 323.844) * z / 615.372;
+
+//            if(y>0 && z<10)  //根据相机坐标系,只选择向下的点云,z方向十米以内的点云;
+                if(y > 0 && z < 10)
+                {
+                    Point.x=x;
+                    Point.y=y;
+                    Point.z=z;
+                    Point.b=rgb.ptr<uchar>(row)[col*3];
+                    Point.g=rgb.ptr<uchar>(row)[col*3+1];
+                    Point.r=rgb.ptr<uchar>(row)[col*3+2];
+                    cloudin->points.push_back(Point);
+                }
             }
         }
+
+    }
+
     pointcloud_pub.publish(cloudin);
 }
 
@@ -671,25 +706,49 @@ void uncutRegion_search(pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloudin,pcl::Poi
 bool ifPlane_uncut_valid(Mat& rgb,pcl::PointCloud<pcl::PointXYZRGB>::Ptr& plane_uncut)
 {
     Mat project_plane( rgb.size(), CV_8UC1, Scalar(0));
-    int count_right_roi_1=0;
-    int count_right_roi_2=0;
-    int count_left_roi=0;
-    int row=0;int col=0;
-    for(int i=0;i<plane_uncut->points.size();i++)
-    {
-        row = 615.312 * plane_uncut->points[i].y  / plane_uncut->points[i].z  + 232.171;
-        col = 615.372 * plane_uncut->points[i].x  / plane_uncut->points[i].z  + 323.844;
-        if(rgb.cols/2+50 - col < 5) count_right_roi_1++;
-        if(rgb.cols/2+50 - col < 30) count_right_roi_2++;
-        if(col < 50) count_left_roi++;
-        project_plane.at<uchar>(row,col) = 255;
-    }
+
+
+    // True harvest, need not change
+    if(isTrueHarvest){
+        int count_right_roi_1=0;
+        int count_right_roi_2=0;
+        int count_left_roi=0;
+        int row=0;int col=0;
+        for(int i=0;i<plane_uncut->points.size();i++)
+        {
+            row = 615.312 * plane_uncut->points[i].y  / plane_uncut->points[i].z  + 232.171;
+            col = 615.372 * plane_uncut->points[i].x  / plane_uncut->points[i].z  + 323.844;
+            if(rgb.cols/2+50 - col < 5) count_right_roi_1++;
+            if(rgb.cols/2+50 - col < 30) count_right_roi_2++;
+            if(col < 50) count_left_roi++;
+            project_plane.at<uchar>(row,col) = 255;
+        }
 //    imshow("project",project_plane);
 //    cout<<plane_uncut->points.size() <<" "<<count_left_roi<<" "<<count_right_roi_1<<" "<<count_right_roi_2<<endl;
-//    阈值参数细调,是否可以自适应调整                                                    &&  count_right_roi_2 > 150 识别边界
-    if(count_right_roi_1 > 10 || count_right_roi_2 > 150 || plane_uncut->points.size()  < 4000) return false;
-    else if(count_left_roi  > 500) return true;
-    else return false;
+//    阈值参数细调,是否可以自适应调整
+//    &&  count_right_roi_2 > 150 识别边界
+        if(count_right_roi_1 > 10 || count_right_roi_2 > 150 || plane_uncut->points.size()  < 4000) return false;
+        else if(count_left_roi  > 500) return true;
+        else return false;
+    }
+    else{
+        int count_right_roi=0;
+        int count_left_roi_1=0;
+        int count_left_roi_2=0;
+        int row=0;int col=0;
+        for(int i=0;i<plane_uncut->points.size();i++){
+            row = 615.312 * plane_uncut->points[i].y  / plane_uncut->points[i].z  + 232.171;
+            col = 615.372 * plane_uncut->points[i].x  / plane_uncut->points[i].z  + 323.844;
+            if(col - (rgb.cols/2 - 50) < 5) count_left_roi_1++;
+            if(col - (rgb.cols/2 - 50) < 30) count_left_roi_2++;
+            if(rgb.cols - col < 50) count_right_roi++;
+            project_plane.at<uchar>(row,col) = 255;
+        }
+
+        if(count_left_roi_1 > 10 || count_left_roi_2 > 150 || plane_uncut->points.size() < 4000) return false;
+        else if(count_right_roi > 500) return true;
+        else return false;
+    }
 }
 
 //二维三维分界线点初步聚类
@@ -728,38 +787,76 @@ Eigen::VectorXf borderpoints_clusterd(Mat& rgb, Mat& depth,pcl::PointCloud<pcl::
 
     pcl::PointXYZRGB Point;
 
-    for(int row=250;row<=rgb.rows;row+=4)  //ROI遍历范围
-        for(int col=50;col<350;col++ )
-        {
-            float z = float(depth.at<ushort>(row,col))/1000;
-            float y = (row - 232.171) * z / 615.312;
-            float x = (col - 323.844) * z / 615.372;
-
-            float distance=abs(A*x+B*y+C*z+D);
-            if(distance<0.42 && distance>0.39) //距离阈值判断
+    if(isTrueHarvest){
+        for(int row=250;row<=rgb.rows;row+=4)  //ROI遍历范围
+            for(int col=50;col<350;col++ )
             {
-                pointdepth.x=col;
-                pointdepth.y=row;
-                int n=pointimg.size();
+                float z = float(depth.at<ushort>(row,col))/1000;
+                float y = (row - 232.171) * z / 615.312;
+                float x = (col - 323.844) * z / 615.372;
 
-                //三维分界线点投影基准平面上,方便观察
-                pointdepth_3d.x=((B*B+C*C)*x-A*(B*y+C*z+D));
-                pointdepth_3d.y=((A*A+C*C)*y-B*(A*x+C*z+D));
-                pointdepth_3d.z=((A*A+B*B)*z-C*(A*x+B*y+D));
+                float distance=abs(A*x+B*y+C*z+D);
+                if(distance<0.42 && distance>0.39) //距离阈值判断
+                {
+                    pointdepth.x=col;
+                    pointdepth.y=row;
+                    int n=pointimg.size();
 
-                pointimg_3d.push_back(pointdepth_3d);
-                pointimg.push_back(pointdepth);
-                //circle(rgb, pointdepth, 3, Scalar(100, 255, 100));
-                Point.x=pointdepth_3d.x;
-                Point.y=pointdepth_3d.y;
-                Point.z=pointdepth_3d.z;
-                Point.r=255;
-                Point.g=0;
-                Point.b=0;
-                cloudin->points.push_back(Point); //三维点云显示
-                break;
+                    //三维分界线点投影基准平面上,方便观察
+                    pointdepth_3d.x=((B*B+C*C)*x-A*(B*y+C*z+D));
+                    pointdepth_3d.y=((A*A+C*C)*y-B*(A*x+C*z+D));
+                    pointdepth_3d.z=((A*A+B*B)*z-C*(A*x+B*y+D));
+
+                    pointimg_3d.push_back(pointdepth_3d);
+                    pointimg.push_back(pointdepth);
+                    //circle(rgb, pointdepth, 3, Scalar(100, 255, 100));
+                    Point.x=pointdepth_3d.x;
+                    Point.y=pointdepth_3d.y;
+                    Point.z=pointdepth_3d.z;
+                    Point.r=255;
+                    Point.g=0;
+                    Point.b=0;
+                    cloudin->points.push_back(Point); //三维点云显示
+                    break;
+                }
             }
-        }
+    }
+    else{// Virtual harvest
+        for(int row=250;row<=rgb.rows;row+=4)  //ROI遍历范围 for virtual test, may need adjust
+            for(int col = 640 - 350;col < 640 - 50;col++ )
+            {
+                float z = float(depth.at<ushort>(row,col))/1000;
+                float y = (row - 232.171) * z / 615.312;
+                float x = (col - 323.844) * z / 615.372;
+
+                float distance=abs(A*x+B*y+C*z+D);
+                if(distance<0.42 && distance>0.39) //距离阈值判断
+                {
+                    pointdepth.x=col;
+                    pointdepth.y=row;
+                    int n=pointimg.size();
+
+                    //三维分界线点投影基准平面上,方便观察
+                    pointdepth_3d.x=((B*B+C*C)*x-A*(B*y+C*z+D));
+                    pointdepth_3d.y=((A*A+C*C)*y-B*(A*x+C*z+D));
+                    pointdepth_3d.z=((A*A+B*B)*z-C*(A*x+B*y+D));
+
+                    pointimg_3d.push_back(pointdepth_3d);
+                    pointimg.push_back(pointdepth);
+                    //circle(rgb, pointdepth, 3, Scalar(100, 255, 100));
+                    Point.x=pointdepth_3d.x;
+                    Point.y=pointdepth_3d.y;
+                    Point.z=pointdepth_3d.z;
+                    Point.r=255;
+                    Point.g=0;
+                    Point.b=0;
+                    cloudin->points.push_back(Point); //三维点云显示
+                    break;
+                }
+            }
+
+    }
+
     return coeff_uncut;
 }
 
@@ -1109,8 +1206,11 @@ void border_offset(Mat& rgb,vector<Point2i>& pointimg,vector<Point3f>& pointimg_
         fitLine(pointimg_3d, line_para_3d, cv::DIST_WELSCH, 0, 1e-2, 1e-2);
         //cout<<line_para_3d[0]<<" "<<line_para_3d[1]<<" "<<line_para_3d[2]<<" "<<line_para_3d[3]<<" "<<line_para_3d[4]<<" "<<line_para_3d[5]<<endl;
 
+        // For virtual harvest, should adjust the standard line here?
+
         double Standard_line_fun_0 = 0.00251082, Standard_line_fun_1 =-0.127729, Standard_line_fun_2= 0.991806,  //分界线标准线
                Standard_line_fun_3= 0.451316,Standard_line_fun_4= 1.08251, Standard_line_fun_5=5.69316;
+
 
         if(line_para_3d[2]<0)  //调整矢量方向一致,避免余弦角计算1变179问题
         {
@@ -1181,8 +1281,6 @@ void border_offset(Mat& rgb,vector<Point2i>& pointimg,vector<Point3f>& pointimg_
 
         // caulate the 2D distance based on two ling
         int dist_2d = ((pStart.x - pStart_Standard.x) + (pEnd.x - pEnd_Standard.x) + 353 / 2) / 2;
-
-
 
         Scalar lineColor(0, 255, 0);
         drawArrow(rgb, pStart, pEnd, 10, 45, lineColor);
@@ -1334,10 +1432,18 @@ void height_detection(Mat& rgb,Mat& depth,height_msgs::height& heightMsg, height
 {
     vector<vector<Point2i> > mask_area;
     vector<Point2i> mask_points;
-    mask_points.push_back(Point2i(450,477));
-    mask_points.push_back(Point2i(407,309));
-    mask_points.push_back(Point2i(439,306));
-    mask_points.push_back(Point2i(516,477));
+    if(isTrueHarvest){
+        mask_points.push_back(Point2i(450,477));
+        mask_points.push_back(Point2i(407,309));
+        mask_points.push_back(Point2i(439,306));
+        mask_points.push_back(Point2i(516,477));
+    }
+    else{// Virtual harvest, for
+        mask_points.push_back(Point2i(640 - 450,477));
+        mask_points.push_back(Point2i(640 - 407,309));
+        mask_points.push_back(Point2i(640 - 439,306));
+        mask_points.push_back(Point2i(640 - 516,477));
+    }
     mask_area.push_back(mask_points);
 
     cv::Mat mask, dst_mask;
