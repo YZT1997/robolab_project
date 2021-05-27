@@ -38,6 +38,8 @@ const bool isTrueHarvest = true;
 
 vector<float> coeff_uncut_height_mean(4,0);
 int Estimated_height=0;  //估计的高度平均值
+int distance_ema = INT_MIN; // use ema filter to smooth the distance
+
 
 ros::Publisher height_border_pub;       // publish the height and border
 ros::Publisher pointcloud_pub;   //发布点云
@@ -1291,8 +1293,9 @@ void border_offset(Mat& rgb,vector<Point2i>& pointimg,vector<Point3f>& pointimg_
         borderMsg.dis = to_string(distance);
 
         //
+        distance_ema = distance_ema == INT_MIN?distance : 0.8 * distance_ema + 0.2 * distance;
         heightBorderMsg.angle_3d = angle;
-        heightBorderMsg.dis_3d = to_string(distance);
+        heightBorderMsg.dis_3d = to_string(distance_ema);
 
 //        if(arc_cosvalue_inangle<40 && arc_cosvalue_inangle>-40 && distance<70 && distance>-70)
         if(arc_cosvalue_inangle<40 && arc_cosvalue_inangle>-40)
@@ -1303,9 +1306,8 @@ void border_offset(Mat& rgb,vector<Point2i>& pointimg,vector<Point3f>& pointimg_
                     "Ang: " + std::to_string(int(value_inangle)) + '.' + std::to_string(abs(xs_value_inangle))+"deg";
             cv::putText(rgb, angle, Point2i(400, 50), cv::FONT_HERSHEY_SIMPLEX, 1, CV_RGB(255, 0, 0), 4);
 
-            int zs_distance = distance;
-            string dis = "Dis: " + std::to_string(zs_distance)+"cm";
-            cv::putText(rgb, dis, Point2i(400, 100), cv::FONT_HERSHEY_SIMPLEX, 1, CV_RGB(255, 0, 0), 5);
+            string dist_ema_str = "Dis: " + std::to_string(distance_ema)+"cm";
+            cv::putText(rgb, dist_ema_str, Point2i(400, 100), cv::FONT_HERSHEY_SIMPLEX, 1, CV_RGB(255, 0, 0), 5);
 
             // 2d dist
             string dis_2d_str = "Dis 2d: " + to_string(dist_2d);
