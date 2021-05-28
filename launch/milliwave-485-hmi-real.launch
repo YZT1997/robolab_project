@@ -1,19 +1,19 @@
 <launch>
 
-#### rosbag #################################################
-  <node pkg="rosbag" type="record" name="bag_record" args="-a -o test_M234"/>
+<!--#### rosbag #################################################-->
+<!--  <node pkg="rosbag" type="record" name="bag_record" args="-a -o test_M234"/>-->
 
-#### HMI ####################################################
+<!--#### HMI ####################################################-->
 
-  <node pkg="trail" type="app_node" name="HMI" />
+<!--  <node pkg="trail" type="app_node" name="HMI" />-->
 
-#### control motors vis RS485 bus ####################################################
+<!--#### control motors vis RS485 bus ####################################################-->
 
-  <node pkg="control485" type="control485_node" name="control485"  output="screen"/>
+<!--  <node pkg="control485" type="control485_node" name="control485"  output="screen"/>-->
 
-#### read signals from CAN bus ####################################################
+<!--#### read signals from CAN bus ####################################################-->
 
-  <node pkg="read_CAN" type="read_CAN_node" name="read_CAN"/>
+<!--  <node pkg="read_CAN" type="read_CAN_node" name="read_CAN"/>-->
 
 #### for line detect ####################################################
 
