@@ -9,6 +9,7 @@
 #include <opencv2/highgui/highgui.hpp>
 //normal
 #include <iostream>
+#include <fstream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>
@@ -37,6 +38,9 @@ using namespace cv;
 unsigned char           * g_pRgbBuffer[4];
 bool                    printmode = false;
 
+void readInstric(string& calib,
+                 vector<Mat>& intrinsic_matrix,
+                 vector<Mat>& distortion_coeffs);
 class ImageConverter
 {
     ros::NodeHandle nh_;
@@ -127,7 +131,7 @@ string sec_to_date(struct timeval &tv)
 }
 
 void multithreads(string filename, int hCamera, tSdkFrameHead sFrameInfo,
-                  BYTE*	pbyBuffer,unsigned char *outBuffer, ImageConverter ic)
+                  BYTE*	pbyBuffer,unsigned char *outBuffer, ImageConverter ic, Mat& intrinsic_matrix, Mat& distortion_coeffs)
 {
   struct timeval start;
   struct timeval end;
@@ -163,7 +167,10 @@ void multithreads(string filename, int hCamera, tSdkFrameHead sFrameInfo,
     //publish to ros topic
      Mat curr (960,1280,CV_8UC3,outBuffer);
 
-     sensor_msgs::ImagePtr msg = cv_bridge::CvImage(std_msgs::Header(),"rgb8", curr).toImageMsg();
+     Mat curr_distort = curr.clone();
+     cv::undistort(curr, curr_distort, intrinsic_matrix, distortion_coeffs);
+
+     sensor_msgs::ImagePtr msg = cv_bridge::CvImage(std_msgs::Header(),"rgb8", curr_distort).toImageMsg();
      ic.pub(msg);
 
      if (printmode == 0)
@@ -174,8 +181,7 @@ void multithreads(string filename, int hCamera, tSdkFrameHead sFrameInfo,
      printf("WARNING: timeout, some thing happened to at least one camera .\n");
   }
   gettimeofday(&end,NULL);
-  if (printmode == 1)
-    cout<<sec_to_date(end)<<endl;
+  if (printmode == 1) cout<<sec_to_date(end)<<endl;
 }
 
 int main(int argc, char**argv)
@@ -216,8 +222,13 @@ int main(int argc, char**argv)
 
     //TODO 固定相机昵称，并按照昵称顺序排列
 
+    // todo read the in matrix of cameras to distort
+    string camera_cali = "/home/yangzt/catkin_ws/src/multicamera/calib.txt";
+    vector<Mat> intrinsic_matrix(4);
+    vector<Mat> distortion_coeffs(4);
+    readInstric(camera_cali, intrinsic_matrix, distortion_coeffs);
 
-	  printf("iCameraCounts =%d  \n",iCameraCounts);
+    printf("iCameraCounts =%d  \n",iCameraCounts);
 
     if(iCameraCounts==0){
         return -1;
@@ -304,14 +315,13 @@ int main(int argc, char**argv)
     {
       gettimeofday(&time_now,NULL);
       //multi thread request
-      for(int i=0;i<iCameraCounts;i++)
-      {
+      for(int i=0;i<iCameraCounts;i++){
         filename[i] = datadirs[i] + sec_to_date(time_now) + ".bmp";
       }
       {
-        thread grasp0(multithreads, filename[0],hCamera[0],sFrameInfo[0],pbyBuffer[0], g_pRgbBuffer[0],ic0);
-        thread grasp1(multithreads, filename[1],hCamera[1],sFrameInfo[1],pbyBuffer[1], g_pRgbBuffer[1],ic1);
-        thread grasp2(multithreads, filename[2],hCamera[2],sFrameInfo[2],pbyBuffer[2], g_pRgbBuffer[2],ic2);
+        thread grasp0(multithreads, filename[0],hCamera[0],sFrameInfo[0],pbyBuffer[0], g_pRgbBuffer[0],ic0, ref(intrinsic_matrix[1]),ref(distortion_coeffs[1]));
+        thread grasp1(multithreads, filename[1],hCamera[1],sFrameInfo[1],pbyBuffer[1], g_pRgbBuffer[1],ic1, ref(intrinsic_matrix[2]),ref(distortion_coeffs[2]));
+        thread grasp2(multithreads, filename[2],hCamera[2],sFrameInfo[2],pbyBuffer[2], g_pRgbBuffer[2],ic2, ref(intrinsic_matrix[3]),ref(distortion_coeffs[3]));
 //        thread grasp3(multithreads, filename[3],hCamera[3],sFrameInfo[3],pbyBuffer[3], g_pRgbBuffer[3],ic3);
 
         grasp0.join();
@@ -361,4 +371,33 @@ int main(int argc, char**argv)
       ros::spin();
 
     return 0;
+}
+void readInstric(string& calib_dir, vector<Mat>& intrinsic_matrix, vector<Mat>& distortion_coeffs){
+    assert(intrinsic_matrix.size()==4 && distortion_coeffs.size()==4);
+    ifstream in(calib_dir);
+//    in.open(calib_dir);
+    if (!in.good())
+    {
+        printf(" ...calib.txt not found. Cannot operate without calib.txt, shutting down.\n");
+        exit(1);
+    }
+    double fx,fy,cx,cy,k1,k2,k3,r1,r2;
+    for (int i = 0; i < 4; ++i) //data文件只有4行
+    {
+        in >> fx >> fy >> cx >> cy >> k1>> k2 >> k3 >> r1 >> r2;
+        intrinsic_matrix[i] = Mat::zeros(Size(3,3),CV_64FC1);
+        distortion_coeffs[i] = Mat::zeros(Size(1,5),CV_64FC1);
+        intrinsic_matrix[i].at<double>(0, 0) = fx;
+        intrinsic_matrix[i].at<double>(0, 2) = cx;
+        intrinsic_matrix[i].at<double>(1, 1) = fy;
+        intrinsic_matrix[i].at<double>(1, 2) = cy;
+        intrinsic_matrix[i].at<double>(2, 2) = 1.0;
+        distortion_coeffs[i].at<double>(0, 0) = k1;
+        distortion_coeffs[i].at<double>(0, 1) = k2;
+        distortion_coeffs[i].at<double>(0, 2) = r1;
+        distortion_coeffs[i].at<double>(0, 3) = r2;
+        distortion_coeffs[i].at<double>(0, 4) = k3;
+        // cout << a << " " << b << endl;
+    }
+
 }
