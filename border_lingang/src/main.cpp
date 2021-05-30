@@ -33,6 +33,7 @@ using namespace std;
 using namespace cv;
 
 int Estimated_height=0;  //估计的高度平均值
+int distance_ema = 0;
 
 void boud_depth(Mat& rgb,Mat& depth);
 void drawArrow(cv::Mat& img, cv::Point pStart, cv::Point pEnd, int len, int alpha,

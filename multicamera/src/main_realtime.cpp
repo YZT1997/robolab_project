@@ -180,27 +180,29 @@ void multithreads(string filename, int hCamera, tSdkFrameHead sFrameInfo,
 
 int main(int argc, char**argv)
 {
+    // Only 3 cameras
+    int camera_count = 3;
     ros::init(argc,argv,"multicamera_realtime");
     ImageConverter ic0("camera/image_0");
     ImageConverter ic1("camera/image_1");
     ImageConverter ic2("camera/image_2");
-    ImageConverter ic3("camera/image_3");
+//    ImageConverter ic3("camera/image_3");     // Only 3 cameras
 
     string filenum = "0_0";
 
-    int                     iCameraCounts = 16;
-    int                     iStatus[4]={-1,-1,-1,-1};
-    tSdkCameraDevInfo       tCameraEnumList[4];
-    int                     hCamera[4];
+    int                     iCameraCounts = 12;
+    int                     iStatus[camera_count]={-1,-1,-1};
+    tSdkCameraDevInfo       tCameraEnumList[camera_count];
+    int                     hCamera[camera_count];
 
-    tSdkCameraCapbility     tCapability[4];
-    tSdkFrameHead           sFrameInfo[4];
-    BYTE*			              pbyBuffer[4];
-    tSdkImageResolution     sImageSize[4];
+    tSdkCameraCapbility     tCapability[camera_count];
+    tSdkFrameHead           sFrameInfo[camera_count];
+    BYTE*			              pbyBuffer[camera_count];
+    tSdkImageResolution     sImageSize[camera_count];
 
-    string datadirs[4];
-    string datadir = "/home/agv/dosuss_ws/data/camera/";
-    for (int i=0; i<4;i++)
+    string datadirs[camera_count];
+    string datadir = "/home/yangzt/catkin_ws/data/camera/";
+    for (int i=0; i<camera_count;i++)
     {
       datadirs[i] = datadir + filenum + "/" + to_string(i) + "/";
     }
@@ -310,12 +312,12 @@ int main(int argc, char**argv)
         thread grasp0(multithreads, filename[0],hCamera[0],sFrameInfo[0],pbyBuffer[0], g_pRgbBuffer[0],ic0);
         thread grasp1(multithreads, filename[1],hCamera[1],sFrameInfo[1],pbyBuffer[1], g_pRgbBuffer[1],ic1);
         thread grasp2(multithreads, filename[2],hCamera[2],sFrameInfo[2],pbyBuffer[2], g_pRgbBuffer[2],ic2);
-        thread grasp3(multithreads, filename[3],hCamera[3],sFrameInfo[3],pbyBuffer[3], g_pRgbBuffer[3],ic3);
+//        thread grasp3(multithreads, filename[3],hCamera[3],sFrameInfo[3],pbyBuffer[3], g_pRgbBuffer[3],ic3);
 
         grasp0.join();
         grasp1.join();
         grasp2.join();
-        grasp3.join();
+//        grasp3.join();
       }
 
       count++;
@@ -352,7 +354,6 @@ int main(int argc, char**argv)
       CameraUnInit(hCamera[i]);
       free(g_pRgbBuffer[i]);
     }
-
 
 
 

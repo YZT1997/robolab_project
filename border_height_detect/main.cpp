@@ -1310,8 +1310,8 @@ void border_offset(Mat& rgb,vector<Point2i>& pointimg,vector<Point3f>& pointimg_
             cv::putText(rgb, dist_ema_str, Point2i(400, 100), cv::FONT_HERSHEY_SIMPLEX, 1, CV_RGB(255, 0, 0), 5);
 
             // 2d dist
-            string dis_2d_str = "Dis 2d: " + to_string(dist_2d);
-            cv::putText(rgb, dis_2d_str, Point2i(400, 150),cv::FONT_HERSHEY_SIMPLEX, 1, CV_RGB(255, 0, 0), 3);
+//            string dis_2d_str = "Dis 2d: " + to_string(dist_2d);
+//            cv::putText(rgb, dis_2d_str, Point2i(400, 150),cv::FONT_HERSHEY_SIMPLEX, 1, CV_RGB(255, 0, 0), 3);
         }
         border_param.publish(borderMsg);
         cv::imshow("Border_offset", rgb);

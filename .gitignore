@@ -1,0 +1,14 @@
+
+birdView_calibration_v2/cmake-build-debug/
+
+birdView_calibration_v2/cmake-build-release/
+
+border_height_detect/cmake-build-debug/
+
+multicamera/cmake-build-debug/
+
+multicamera/cmake-build-release/
+
+darknet_ros
+
+.idea/
