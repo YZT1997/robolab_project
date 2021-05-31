@@ -187,11 +187,12 @@ void multithreads(string filename, int hCamera, tSdkFrameHead sFrameInfo,
 int main(int argc, char**argv)
 {
     // Only 3 cameras
+    // Mark the topic as label on real camera(02, 03, 04)
     int camera_count = 3;
     ros::init(argc,argv,"multicamera_realtime");
-    ImageConverter ic0("camera/image_0");
-    ImageConverter ic1("camera/image_1");
-    ImageConverter ic2("camera/image_2");
+    ImageConverter ic0("camera/image_2");
+    ImageConverter ic1("camera/image_3");
+    ImageConverter ic2("camera/image_4");
 //    ImageConverter ic3("camera/image_3");     // Only 3 cameras
 
     string filenum = "0_0";
@@ -207,6 +208,7 @@ int main(int argc, char**argv)
     tSdkImageResolution     sImageSize[camera_count];
 
     string datadirs[camera_count];
+    // todo need change with IPC
     string datadir = "/home/yangzt/catkin_ws/data/camera/";
     for (int i=0; i<camera_count;i++)
     {
@@ -221,8 +223,11 @@ int main(int argc, char**argv)
     CameraEnumerateDevice(tCameraEnumList,&iCameraCounts);
 
     //TODO 固定相机昵称，并按照昵称顺序排列
+    // Camera ID set as 2 3 4
 
-    // todo read the in matrix of cameras to distort
+
+    // read the in matrix of cameras to distort
+    // todo: change as IPC
     string camera_cali = "/home/yangzt/catkin_ws/src/multicamera/calib.txt";
     vector<Mat> intrinsic_matrix(4);
     vector<Mat> distortion_coeffs(4);
@@ -239,18 +244,22 @@ int main(int argc, char**argv)
         printf("num =%d %s  %s \n",i,tCameraEnumList[i].acProductName,tCameraEnumList[i].acFriendlyName);
     }
 
-    for (int i=0;i<iCameraCounts;i++)
-    {
+    for (int i=0;i<iCameraCounts;i++){
       //相机初始化。初始化成功后，才能调用任何其他相机相关的操作接口
-      iStatus[i] = CameraInit(&tCameraEnumList[i],-1,-1,&hCamera[i]);
+//      iStatus[i] = CameraInit(&tCameraEnumList[i],-1,-1,&hCamera[i]);
 
+      // init camera as Name 02 03 04
+        string camNameStr = "Camera" + to_string(i + 2);
+        char ptrCamName[20];
+        strcpy(ptrCamName, camNameStr.c_str());
+
+        iStatus[i] = CameraInitEx2(ptrCamName, &hCamera[i]);
+      
       printf("CameraInit iStatus =%d \n",iStatus[i]);
       //初始化失败
-      if(iStatus[i]!=CAMERA_STATUS_SUCCESS)
-      {
+      if(iStatus[i]!=CAMERA_STATUS_SUCCESS){
         return -1;
       }
-
 
       //获得相机的特性描述结构体。该结构体中包含了相机可设置的各种参数的范围信息。决定了相关函数的参数
       CameraGetCapability(hCamera[i],&tCapability[i]);
@@ -365,10 +374,8 @@ int main(int argc, char**argv)
       free(g_pRgbBuffer[i]);
     }
 
-
-
     printf("end  \n");
-      ros::spin();
+    ros::spin();
 
     return 0;
 }
