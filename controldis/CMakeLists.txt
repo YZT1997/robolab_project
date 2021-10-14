@@ -15,8 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
 		tf2_geometry_msgs
 		height_border_msgs
 )
-
-
+find_package(OpenCV REQUIRED)
 
 catkin_package(
 		CATKIN_DEPENDS height_border_msgs
@@ -31,6 +30,7 @@ catkin_package(
 include_directories(
   # include
   ${catkin_INCLUDE_DIRS}
+  ${OpenCV_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -46,7 +46,8 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(${PROJECT_NAME}_node src/controldis_node.cpp)
+add_executable(controldis_rgbd_node src/controldis_rgbd_node.cpp)
+add_executable(controldis_gps_node src/controldis_gps_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -63,8 +64,14 @@ add_executable(${PROJECT_NAME}_node src/controldis_node.cpp)
 #   ${catkin_LIBRARIES}
 # )
 
-target_link_libraries(${PROJECT_NAME}_node
+target_link_libraries(controldis_rgbd_node
 	${catkin_LIBRARIES}
+		${OpenCV_LIBS}
+	pthread
+)
+target_link_libraries(controldis_gps_node
+	${catkin_LIBRARIES}
+		${OpenCV_LIBS}
 	pthread
 )
 

@@ -26,3 +26,7 @@ include_directories( ${catkin_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS} ${EIGEN3_INCLUDE
 
 add_executable(border_height_detect_node main.cpp fit.h)
 target_link_libraries(border_height_detect_node ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBS})
+
+add_executable(pointcloud_node pointcloud.cpp)
+target_link_libraries(pointcloud_node ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBS})
+

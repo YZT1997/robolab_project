@@ -1,0 +1,6 @@
+<launch>
+    <include file="$(find realsense2_camera)/launch/rs_camera.launch">
+    </include>
+<!-- 
+    <node pkg="rosbag" type="record" name="bag_record" args="-a -o /home/yangzt/catkin_ws/grape_perception_2"/> -->
+</launch>
